@@ -1,7 +1,9 @@
 const express = require('express');
 const connectdb= require('./config/database');
 const app = express();
-const User = require('./models/user');
+const User = require('./models/user'); 
+
+app.use(express.json());
 
 connectdb().then(() => {
     console.log('Database connected');
@@ -9,22 +11,10 @@ connectdb().then(() => {
     console.log('Server is running on port 3000');
 });
 
-app.post('/signup', (req, res) => {
-    console.log(req.body)
-    const userObj = {
-        // firstName: req.body.firstName,
-        // lastName: req.body.lastName,
-        // emailId: req.body.emailId,
-        // password: req.body.password
-        firstName:"Virat",
-        lastName:"Kohli",
-        emailId:"virat@gmail.com",
-        password:"12345678",
-        age:29,
-    }
-    const user = new User(userObj);
+app.post('/signup', (req, res) => {    
+    const user = new User(req.body);
     user.save().then((user) => {
-        res.status(201).send(user,"User created");
+        res.status(201).send("User created");
     }).catch((err) => {
         res.status(500).send(err);
     });
