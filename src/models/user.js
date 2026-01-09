@@ -1,28 +1,54 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const userSchema = mongoose.Schema({
-   firstName:{
-    type: String,
-    required: true
-   },
-   lastName:{
-    type: String,
-    required: true
-   },
-   emailId: {
+const userSchema = new mongoose.Schema({
+  firstName: {
     type: String,
     required: true,
-    unique: true
-   },
-   password: {
+    minLength: 2,
+    maxLength: 50,
+  },
+  lastName: {
     type: String,
-    required: true
-   }
-,
-age: {
+  },
+  emailId: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  age: {
     type: Number,
-    required: true
-}
-});
+    min:18,
+    max:100,
+  },
+  gender:{
+    type: String,
+    validate(value){
+      if(["male", "female", "other"].includes(value)){
+        throw new Error("Gender should be male, female or other");
+      }
+    }
+  },
+  photoUrl:{
+    type: String
+  },
+  about:{
+    type: String,
+    default: "I am a developer"
+  },
+  skills:{
+    type: [String],
+    uniqueItems: true
+  },
+},
+{
+    timestamps: true
+  },
+);
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);
