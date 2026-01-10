@@ -2,6 +2,8 @@ const express = require("express");
 const connectdb = require("./config/database");
 const app = express();
 const User = require("./models/user");
+const { validateSignup } = require("./utils/validator");
+const brcypt = require("bcrypt");
 
 app.use(express.json());
 
@@ -11,18 +13,46 @@ connectdb()
     app.listen(3000, () => {
       console.log("Server is running on port 3000");
     });
+    try {
+      app.post("/signup", async (req, res) => {
+        validateSignup(req);
+        const { password } = req.body;
 
-    app.post("/signup", (req, res) => {
-      const user = new User(req.body);
-      user
-        .save()
-        .then((user) => {
-          res.status(201).send("User created");
-        })
-        .catch((err) => {
-          res.status(500).send(err);
+        const passwordHash = await brcypt.hash(password, 10);
+        const user = new User({
+          ...req.body,
+          password: passwordHash,
         });
+        user
+          .save()
+          .then((user) => {
+            res.status(201).send("User created");
+          })
+          .catch((err) => {
+            res.status(500).send(err.message);
+          });
+      });
+    } catch (err) {
+      res.status(500).send(err);
+    }
+
+    app.post("/login", async (req, res) => {
+      try {
+        const { emailId, password } = req.body;
+        const user = await User.findOne({ emailId });
+        if (!user) {
+          return res.status(404).send("User not found");
+        }
+        const isMatch = await brcypt.compare(password, user.password);
+        if (!isMatch) {
+          return res.status(400).send("Invalid credentials");
+        }
+        res.status(200).send("Login successful");
+      } catch (err) {
+        res.status(500).send(err);
+      }
     });
+
     //find user with email
     app.get("/findUser", async (req, res) => {
       const userEmail = req.body.email;
@@ -70,7 +100,7 @@ connectdb()
           returnDocument: "after",
           runValidators: true,
         });
-        console.log(user)
+        console.log(user);
         res.send("User Updated Successfully");
       } catch (err) {
         res.status(500).send(err);
