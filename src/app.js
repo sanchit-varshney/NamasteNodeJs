@@ -4,7 +4,11 @@ const app = express();
 const User = require("./models/user");
 const { validateSignup } = require("./utils/validator");
 const brcypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middlewares/auth");
 
+app.use(cookieParser());
 app.use(express.json());
 
 connectdb()
@@ -47,9 +51,19 @@ connectdb()
         if (!isMatch) {
           return res.status(400).send("Invalid credentials");
         }
+        const token = jwt.sign({ _id: user._id }, "DevTinder@123");
+        res.cookie("token", token, { httpOnly: true });
         res.status(200).send("Login successful");
       } catch (err) {
         res.status(500).send(err);
+      }
+    });
+    app.get("/profile", userAuth, (req, res) => {
+      try {
+        const user = req.user;
+        res.status(200).send(user);
+      } catch (err) {
+        return res.status(401).send("Invalid or expired token");
       }
     });
 
@@ -90,7 +104,7 @@ connectdb()
         "skills",
       ];
       const isUpdateAllowed = Object.keys(data).every((update) =>
-        ALLOWED_UPDATES.includes(update)
+        ALLOWED_UPDATES.includes(update),
       );
       if (!isUpdateAllowed) {
         return res.status(400).send({ error: "Invalid update", error });
