@@ -13,6 +13,7 @@ const userAuth = async (req, res, next) => {
         if (!user) {
             return res.status(401).send("User not found");
         }
+        req.user = user;
         next();
     } catch (err) {
         return res.status(401).send("Invalid or expired token");

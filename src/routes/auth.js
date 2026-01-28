@@ -8,22 +8,32 @@ const { userAuth } = require("../middlewares/auth");
 
 
 authRouter.post("/signup", async (req, res) => {
-  validateSignup(req);
-  const { password } = req.body;
+  try {
+    validateSignup(req);
+    const { password } = req.body;
 
   const passwordHash = await brcypt.hash(password, 10);
   const user = new User({
     ...req.body,
     password: passwordHash,
   });
-  user
-    .save()
-    .then((user) => {
-      res.status(201).send("User created");
-    })
-    .catch((err) => {
-      res.status(500).send(err.message);
-    });
+    user
+      .save()
+      .then((user) => {
+        res.status(201).send("User created");
+      })
+      .catch((err) => {
+        res.status(500).send(err.message);
+      });
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
+});
+
+// Test route to verify server is working
+authRouter.post("/logout", (req, res) => {
+  res.cookie("token", null, { httpOnly: true, expires: new Date(0) });
+  res.status(200).send("Logged out successfully");
 });
 
 authRouter.post("/login", async (req, res) => {
